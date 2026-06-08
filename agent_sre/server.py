@@ -91,10 +91,29 @@ async def loop():
     return EventSourceResponse(_guarded_sse(loop_stream))
 
 
+# Drift triage spawns the npx MCP server (~10-15s cold), so cache it: the header resolves instantly
+# and the read never competes with a run. Warmed in the background at startup.
+_drift_cache: dict = {"value": None, "ts": 0.0}
+_DRIFT_TTL = 300.0
+
+
+async def _refresh_drift() -> dict:
+    value = await run_in_threadpool(drift_triage)
+    _drift_cache["value"] = value
+    _drift_cache["ts"] = time.time()
+    return value
+
+
+@app.on_event("startup")
+async def _warm_drift() -> None:
+    asyncio.create_task(_refresh_drift())  # non-blocking: don't delay readiness
+
+
 @app.get("/api/drift")
 async def drift() -> dict:
-    """Live triage of the intermittent 2nd bug from real drift-watch traces (read-only)."""
-    return await run_in_threadpool(drift_triage)
+    """Live triage of the intermittent 2nd bug (cached read of real drift-watch traces)."""
+    fresh = _drift_cache["value"] is not None and time.time() - _drift_cache["ts"] <= _DRIFT_TTL
+    return _drift_cache["value"] if fresh else await _refresh_drift()
 
 
 # Serve the built cockpit at / when present (single public URL for Phase 5). Mounted last so /api wins.

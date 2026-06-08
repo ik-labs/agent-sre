@@ -17,6 +17,9 @@ export function VerifyCard({ baseline, verify, active }: Props) {
       done={!!verify}
       tone={verify ? "pass" : "neutral"}
     >
+      {!verify && active && (
+        <p className="working">Re-running the same incident live with the fixed prompt… (~30s)</p>
+      )}
       {verify && baseline && (
         <div className="flip">
           <div className="flip-row">

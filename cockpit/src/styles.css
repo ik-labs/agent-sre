@@ -90,6 +90,7 @@ body {
 .score-badge.pass { background: var(--green-dim); color: var(--green); border: 1px solid #245a3a; }
 .score-badge.big { font-size: 18px; padding: 5px 14px; }
 .reason { color: var(--muted); margin: 8px 0 0; }
+.working { color: var(--accent); margin: 0; font-size: 13px; }
 
 /* Diff */
 .diff { font-family: var(--mono); font-size: 12px; margin: 0 0 12px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }

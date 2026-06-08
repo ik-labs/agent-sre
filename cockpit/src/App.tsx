@@ -140,7 +140,11 @@ export default function App() {
           <DiagnoseCard data={diagnose} active={activeStep === "diagnose"} />
           <MeasureCard data={measure} active={activeStep === "measure"} />
           <FixCard diff={fixDiff} active={activeStep === "fix" || activeStep === "apply"} applied={fixApplied} />
-          <VerifyCard baseline={measure} verify={verify} active={activeStep === "verify"} />
+          <VerifyCard
+            baseline={measure}
+            verify={verify}
+            active={activeStep === "verify" || activeStep === "target_after"}
+          />
           <GuardCard cases={guardCases} result={guardResult} active={activeStep === "guard"} />
           <PreventCard saved={preventSaved} active={activeStep === "prevent"} />
         </section>

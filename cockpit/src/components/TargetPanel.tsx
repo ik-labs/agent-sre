@@ -33,7 +33,6 @@ function lastLine(final: string): string {
 }
 
 export function TargetPanel({ incident, before, after, activeStep }: Props) {
-  const running = activeStep === "target_before" || activeStep === "target_after";
   return (
     <div className="target-panel">
       <div className="incident">
@@ -44,10 +43,18 @@ export function TargetPanel({ incident, before, after, activeStep }: Props) {
       {before ? (
         <OutputBlock data={before} label="Agent's answer (before fix)" />
       ) : (
-        <div className="placeholder">{running ? "Running the agent…" : "Press “Run incident”."}</div>
+        <div className="placeholder">
+          {activeStep === "target_before" ? "Running the agent…" : "Press “Run incident”."}
+        </div>
       )}
 
-      {after && <OutputBlock data={after} label="Agent's answer (after fix)" />}
+      {after ? (
+        <OutputBlock data={after} label="Agent's answer (after fix)" />
+      ) : (
+        activeStep === "target_after" && (
+          <div className="placeholder">Re-running with the fix…</div>
+        )
+      )}
     </div>
   );
 }
