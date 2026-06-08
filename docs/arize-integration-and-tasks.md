@@ -262,11 +262,17 @@ adk deploy cloud_run \
     separator-free lowercase identifier (`incidenttriageagent`) so the prompt the agent READS and the
     prompt the SRE PATCHES are the same object. This silently broke Verify until fixed.
 
-### Phase 3 — Cockpit UI (Day 2, parallel)
-- [ ] React+Vite, two-column layout (`cockpit/`).
-- [ ] Stream Diagnose/Measure/Fix/Verify cards live.
-- [ ] Verify card: eval bar 0/1→1/1 + output flip, made unmissable.
-- [ ] Fix card: prompt diff + Apply button.
+### Phase 3 — Cockpit UI (Day 2, parallel) — ✅ DONE (2026-06-08)
+- [x] React+Vite+TS, two-column layout (`cockpit/`), flat/legible, no UI lib.
+- [x] Stream Diagnose/Measure/Fix/Verify cards live (SSE via `EventSource`).
+- [x] Verify card: eval bar `0/1→1/1` + `healthy ❌ → paged ✅` output flip, made unmissable.
+- [x] Fix card: prompt diff (colored) + **Apply Fix** button (interactive pause for human approval).
+- Backend: `agent_sre/server.py` (FastAPI, `GET /api/run` + `GET /api/apply` SSE) over
+  `agent_sre/orchestrator.py` (async generators reusing the proven spine functions). Single public
+  URL: FastAPI serves `cockpit/dist` at `/` (verified: static + API coexist on :8000).
+  Run dev: `make server` + `make cockpit`; or build (`cd cockpit && npm run build`) and open
+  http://localhost:8000. **TODO (Phase 5):** add an auth/rate-limit gate before public deploy
+  (endpoints mutate the Phoenix prompt + call Gemini per request).
 
 ### Phase 4 — Depth: Guard + Prevent (Day 3, degrade to "shown" if behind)
 - [ ] **Guard**: golden-set dataset + experiment replay through patched agent → all PASS.
