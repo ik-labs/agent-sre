@@ -1,12 +1,16 @@
-.PHONY: help setup model-probe smoke-trace mcp-smoke verify
+.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident
 
 help:
-	@echo "Agent SRE — Phase 0 targets:"
+	@echo "Agent SRE targets:"
 	@echo "  make setup        - uv sync (resolve deps on pinned Python 3.12)"
 	@echo "  make model-probe  - find a callable Gemini model via Vertex; prints GEMINI_MODEL"
 	@echo "  make smoke-trace  - run one ADK turn; emits a trace to Phoenix (MESSAGE=...)"
 	@echo "  make mcp-smoke    - start @arizeai/phoenix-mcp and list its tools"
 	@echo "  make verify       - model-probe + smoke-trace + mcp-smoke in sequence"
+	@echo "  make incident     - run the broken target agent; print the failure chain"
+
+incident:
+	uv run python -m target_agent.run_incident
 
 setup:
 	uv sync

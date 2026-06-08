@@ -232,12 +232,19 @@ adk deploy cloud_run \
 - [x] Init fresh repo, Apache-2.0 license, first commit (`59960d6`). **TODO:** push to a *public*
       GitHub remote before submission (license must be detectable in GitHub "About").
 
-### Phase 1 — Target agent + tracing (Day 1)
-- [ ] Build minimal DevOps incident agent in `target_agent/` with 4 mock tools (`fixtures.py`).
-- [ ] Inject the wrong-arg bug (`payment` vs `payments`) per fixtures doc.
-- [ ] Wire `register()` + `GoogleADKInstrumentor`; run the incident; confirm traces in Phoenix.
-- [ ] Confirm the failing trace shows: high error_rate metric (step1) → `get_pod_logs("payment")` →
-      "no logs" → false "healthy" conclusion. The cause span ≠ symptom span.
+### Phase 1 — Target agent + tracing (Day 1) — ✅ DONE (2026-06-08)
+- [x] Build minimal DevOps incident agent in `target_agent/` with 4 mock tools (`fixtures.py`).
+- [x] Inject the wrong-arg bug (`payment` vs `payments`) per fixtures doc.
+      (Bug lives in `prompt.py` — step 2 hardcodes `get_pod_logs("payment")` — so Phase-2 Fix can
+      patch it via `upsert-prompt`. Determinism: `temperature=0`.)
+- [x] Wire `register()` (auto_instrument); run the incident; confirm traces in Phoenix.
+      (`make incident` reproduces the chain deterministically: metrics("payments")=0.38 ->
+      pod_logs("payment")="no logs found" -> no page -> `VERDICT: healthy`.)
+- [x] Confirm the failing trace shows the cause span ≠ symptom span.
+      (Verified via MCP `get-spans span_kinds=[TOOL]` on trace `2ad7fd4d…`: span
+      `execute_tool get_pod_logs` carries `tool.parameters.service="payment"` +
+      `tool_response={"result":"no logs found"}` — distinct from the LLM "healthy" conclusion span.
+      This is the exact attribute the SRE's Diagnose step will read.)
 
 ### Phase 2 — SRE spine: Diagnose → Measure → Fix → Verify (Day 2) — THE WINNING CORE
 - [ ] SRE connects to Phoenix MCP; **Diagnose**: queries traces, walks spans, outputs root cause + bad arg.
