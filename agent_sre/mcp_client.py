@@ -31,7 +31,7 @@ class PhoenixMCP:
         if not base_url or not api_key:
             raise RuntimeError("PHOENIX_COLLECTOR_ENDPOINT and PHOENIX_API_KEY must be set")
         self._proc = subprocess.Popen(
-            ["npx", "-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url],
+            ["npx", "-y", "@arizeai/phoenix-mcp@4.0.13", "--baseUrl", base_url],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, bufsize=1, env={**os.environ, "PHOENIX_API_KEY": api_key},
         )

@@ -35,6 +35,7 @@ export default function App() {
   const [guardCases, setGuardCases] = useState<GuardCase[]>([]);
   const [guardResult, setGuardResult] = useState<GuardResult | null>(null);
   const [preventSaved, setPreventSaved] = useState<PreventSaved | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const esRef = useRef<EventSource | null>(null);
 
   function reset() {
@@ -83,6 +84,15 @@ export default function App() {
       case "prevent_saved":
         setPreventSaved(data as PreventSaved);
         break;
+      case "busy": {
+        esRef.current?.close();
+        setActiveStep(null);
+        setNotice("Demo is busy — another run is in progress. Try again in a few seconds.");
+        setPhase((p) =>
+          p === "running" ? "idle" : p === "applying" ? "awaitingApply" : p === "guarding" ? "verified" : p,
+        );
+        break;
+      }
       case "done": {
         const phaseName = (data as { phase: string }).phase;
         esRef.current?.close();
@@ -95,16 +105,19 @@ export default function App() {
 
   function start() {
     reset();
+    setNotice(null);
     setPhase("running");
     esRef.current = streamSSE("/api/run", handle);
   }
 
   function apply() {
+    setNotice(null);
     setPhase("applying");
     esRef.current = streamSSE("/api/apply", handle);
   }
 
   function guard() {
+    setNotice(null);
     setPhase("guarding");
     esRef.current = streamSSE("/api/guard", handle);
   }
@@ -125,6 +138,8 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {notice && <div className="notice">{notice}</div>}
 
       <main className="grid">
         <section className="col col-target">

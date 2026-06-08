@@ -40,6 +40,9 @@ body {
 }
 .run-btn:disabled { opacity: 0.55; cursor: default; }
 
+/* Busy notice */
+.notice { background: var(--red-dim); border: 1px solid #5a2b2b; color: #f3b6b1; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
+
 /* Two columns */
 .grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; align-items: start; }
 .col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }

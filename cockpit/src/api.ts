@@ -12,6 +12,7 @@ const EVENTS = [
   "guard_case",
   "guard_result",
   "prevent_saved",
+  "busy",
   "done",
 ];
 

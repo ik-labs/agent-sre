@@ -69,7 +69,7 @@ def _phoenix_mcp_toolset(tool_filter: list[str]) -> MCPToolset:
                 command="npx",
                 # Keep the API key OUT of argv (it would otherwise show in `ps`). The phoenix-mcp
                 # server reads PHOENIX_API_KEY from the environment; we pass it via env= below.
-                args=["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url],
+                args=["-y", "@arizeai/phoenix-mcp@4.0.13", "--baseUrl", base_url],
                 env={**os.environ, "PHOENIX_API_KEY": api_key},
             ),
             # npx may cold-start the server; give it room beyond the 5s default.
