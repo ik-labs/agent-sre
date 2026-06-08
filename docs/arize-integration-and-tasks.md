@@ -274,11 +274,25 @@ adk deploy cloud_run \
   http://localhost:8000. **TODO (Phase 5):** add an auth/rate-limit gate before public deploy
   (endpoints mutate the Phoenix prompt + call Gemini per request).
 
-### Phase 4 — Depth: Guard + Prevent (Day 3, degrade to "shown" if behind)
-- [ ] **Guard**: golden-set dataset + experiment replay through patched agent → all PASS.
-- [ ] **Prevent**: save failing case as permanent dataset example via MCP.
-- [ ] Add 2nd bug (intermittent tool-selection) to SRE triage list for breadth (diagnose only).
-- [ ] Add "Drift" tab (shown, one line).
+### Phase 4 — Depth: Guard + Prevent (Day 3) — ✅ DONE LIVE (2026-06-08)
+- [x] **Guard**: `golden-incidents` dataset + Phoenix **experiment** replay through the patched
+      agent → **4/4 PASS** (`agent_sre/guard.py`, `make guard`). Experiment URL surfaced + readable
+      via MCP. Deterministic rule evaluator (`agent_sre/golden.py`).
+- [x] **Prevent**: save the failing case as a permanent example via MCP **`add-dataset-examples`**
+      into `sre-regressions` (`agent_sre/prevent.py`, `make prevent`).
+- [x] 2nd bug (intermittent tool-selection) is **LIVE, not shown**: `target_agent/drift_agent.py`
+      (temp 0.9) + `make drift-seed` emits ~14 real traces to a `drift-watch` project;
+      `agent_sre/drift.py` triages them via MCP (diagnose-only).
+- [x] "Drift" tab is **live** (`/api/drift` → "N/14 traces skipped log inspection").
+- Cockpit shows the full 6-step loop: Diagnose · Measure · Fix · Verify · Guard · Prevent, with a
+  "Guard & Prevent" button after Verify. SSE: `/api/guard`, `/api/drift`.
+- **Two gotchas recorded:**
+  1. Guard exposed that a payments-hardcoded prompt makes the golden set meaningless → **generalized
+     the target prompt** (triage the reported service; bug = payments-specific internal-label note)
+     and made `FIX_RULE` contradiction-conditional (empty logs + HIGH error rate ≠ healthy).
+  2. Tracing project routing: importing the `target_agent` package eagerly imported `agent.py` →
+     `setup_tracing(incident-agent)`, and the global tracer singleton then ignored the drift script's
+     `drift-watch` registration. Fixed by exposing `root_agent` lazily via `__getattr__`.
 
 ### Phase 5 — Ship (Day 3 afternoon/evening)
 - [ ] Deploy to Cloud Run via `adk deploy cloud_run ... --with_ui --min-instances=1` (see GCP section).
