@@ -24,15 +24,17 @@ sys.path.insert(0, str(_ROOT))
 
 from google.genai import types  # noqa: E402
 
-from target_agent.agent import root_agent  # noqa: E402  (also runs setup_tracing)
+from target_agent.agent import build_agent  # noqa: E402  (also runs setup_tracing)
 from target_agent.prompt import INCIDENT_INPUT  # noqa: E402
 
 
 async def run() -> dict:
     from google.adk.runners import InMemoryRunner
 
+    # Rebuild per run so a freshly-applied Phoenix prompt fix takes effect immediately.
+    agent = build_agent()
     app_name, user_id, session_id = "incident_triage", "operator", secrets.token_hex(8)
-    runner = InMemoryRunner(agent=root_agent, app_name=app_name)
+    runner = InMemoryRunner(agent=agent, app_name=app_name)
     await runner.session_service.create_session(
         app_name=app_name, user_id=user_id, session_id=session_id
     )

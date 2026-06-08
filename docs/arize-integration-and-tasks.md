@@ -246,12 +246,21 @@ adk deploy cloud_run \
       `tool_response={"result":"no logs found"}` — distinct from the LLM "healthy" conclusion span.
       This is the exact attribute the SRE's Diagnose step will read.)
 
-### Phase 2 — SRE spine: Diagnose → Measure → Fix → Verify (Day 2) — THE WINNING CORE
-- [ ] SRE connects to Phoenix MCP; **Diagnose**: queries traces, walks spans, outputs root cause + bad arg.
-- [ ] **Measure**: eval-author generates the judge, runs it → 0/1 FAIL baseline (Python eval lib).
-- [ ] **Fix**: SRE proposes prompt diff, applies via MCP prompt-update.
-- [ ] **Verify**: re-run the same case LIVE → eval flips to 1/1 PASS; output flips `healthy ❌`→`paged ✅`.
-- [ ] ⭐ This is the non-fakeable beat. If Phase 2 works, you can submit and win. Protect it.
+### Phase 2 — SRE spine: Diagnose → Measure → Fix → Verify (Day 2) — ✅ PROVEN (2026-06-08)
+- [x] SRE connects to Phoenix MCP; **Diagnose**: queries traces, walks spans, outputs root cause + bad arg.
+      (`agent_sre/sre_agent.py` ADK LlmAgent + MCPToolset; `make diagnose` → calls list-traces +
+      get-spans, names `get_pod_logs(service="payment")` as cause span.)
+- [x] **Measure**: Gemini LLM-judge (temp 0), runs it → **0/1 FAIL baseline** (`agent_sre/eval.py`).
+- [x] **Fix**: SRE proposes prompt diff, applies via MCP **`upsert-prompt`** (`agent_sre/fix.py`).
+- [x] **Verify**: re-run the same case LIVE → eval flips **1/1 PASS**; output flips `healthy ❌`→`paged ✅`.
+      (`agent_sre/run_spine.py`, `make spine` — fully reproducible, resets to buggy baseline first.)
+- [x] ⭐ The non-fakeable beat works end-to-end. Foundation for prereqs:
+  - **Step 0** (`prompt_source.py`): agent loads its instruction from the Phoenix prompt store and
+    `build_agent()` rebuilds per run, so the fix takes effect on the very next run (even same-process).
+  - **GOTCHA recorded:** Phoenix MCP `upsert-prompt` **strips separators from the prompt name**
+    (`incident-triage-agent` → `incidenttriageagent`) while the Python client preserves them. Use a
+    separator-free lowercase identifier (`incidenttriageagent`) so the prompt the agent READS and the
+    prompt the SRE PATCHES are the same object. This silently broke Verify until fixed.
 
 ### Phase 3 — Cockpit UI (Day 2, parallel)
 - [ ] React+Vite, two-column layout (`cockpit/`).

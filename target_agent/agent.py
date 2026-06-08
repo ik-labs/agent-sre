@@ -25,18 +25,27 @@ setup_tracing()
 
 _MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Pull the instruction from the Phoenix prompt store so the SRE's Fix (upsert-prompt) is LIVE.
-# Falls back to the local buggy constant if Phoenix is unreachable. See prompt_source.py.
-root_agent = Agent(
-    model=_MODEL,
-    name="incident_triage_agent",
-    instruction=load_instruction(),
-    tools=[
-        FunctionTool(func=get_metrics),
-        FunctionTool(func=get_pod_logs),
-        FunctionTool(func=get_oncall),
-        FunctionTool(func=page_oncall),
-    ],
-    # Pin determinism for the demo spine (stable tool args + stable verdict).
-    generate_content_config=types.GenerateContentConfig(temperature=0.0),
-)
+
+def build_agent() -> Agent:
+    """Construct the agent, pulling its instruction from Phoenix at THIS moment.
+
+    Rebuilding per run is what makes the SRE's Fix verifiable live: after `upsert-prompt` creates a
+    new prompt version, the next `build_agent()` picks it up — even within the same process.
+    """
+    return Agent(
+        model=_MODEL,
+        name="incident_triage_agent",
+        instruction=load_instruction(),
+        tools=[
+            FunctionTool(func=get_metrics),
+            FunctionTool(func=get_pod_logs),
+            FunctionTool(func=get_oncall),
+            FunctionTool(func=page_oncall),
+        ],
+        # Pin determinism for the demo spine (stable tool args + stable verdict).
+        generate_content_config=types.GenerateContentConfig(temperature=0.0),
+    )
+
+
+# Exported for ADK (`adk run target_agent` / deploy). Scripts use build_agent() for a fresh pull.
+root_agent = build_agent()

@@ -13,7 +13,11 @@ from __future__ import annotations
 
 import os
 
-PROMPT_IDENTIFIER = "incident-triage-agent"
+# NOTE: separator-free, lowercase. The Phoenix MCP `upsert-prompt` tool normalizes names by
+# stripping hyphens/underscores (e.g. "incident-triage-agent" -> "incidenttriageagent"), while the
+# Python client preserves them. Using a canonical alphanumeric name keeps the prompt the agent reads
+# and the prompt the SRE patches identical across BOTH paths.
+PROMPT_IDENTIFIER = "incidenttriageagent"
 
 
 def _phoenix_client():

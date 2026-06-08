@@ -11,6 +11,7 @@ help:
 	@echo "  make seed-prompt  - seed the agent instruction into the Phoenix prompt store"
 	@echo "  make diagnose     - run the SRE's Diagnose step (reads target traces via Phoenix MCP)"
 	@echo "  make measure      - run the LLM-judge over the target's current behavior (0/1 or 1/1)"
+	@echo "  make spine        - the live spine: Measure -> Fix (MCP) -> Verify (0/1 -> 1/1)"
 
 incident:
 	uv run python -m target_agent.run_incident
@@ -23,6 +24,9 @@ diagnose:
 
 measure:
 	uv run python -m agent_sre.eval
+
+spine:
+	uv run python -m agent_sre.run_spine
 
 setup:
 	uv sync
