@@ -1,4 +1,4 @@
-.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident seed-prompt diagnose measure spine server cockpit
+.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident seed-prompt diagnose measure spine server cockpit guard prevent drift-seed
 
 help:
 	@echo "Agent SRE targets:"
@@ -29,6 +29,15 @@ measure:
 
 spine:
 	uv run python -m agent_sre.run_spine
+
+guard:
+	uv run python -m agent_sre.guard
+
+prevent:
+	uv run python -m agent_sre.prevent
+
+drift-seed:
+	uv run python scripts/generate_drift_traces.py
 
 server:
 	uv run uvicorn agent_sre.server:app --reload --port 8000

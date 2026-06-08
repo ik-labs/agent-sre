@@ -45,9 +45,9 @@ def _wait_until(predicate: Callable[[str], bool], timeout: int = 20) -> bool:
 async def main() -> int:
     print("AGENT SRE — LIVE SPINE  (Measure → Fix → Verify)\n" + "=" * 60)
 
-    # Ensure a clean broken baseline (idempotent demo).
+    # Ensure a clean broken baseline (idempotent demo). Buggy prompt lacks the appended FIX_RULE.
     reset_to_buggy()
-    _wait_until(lambda t: 'get_pod_logs("payment")' in t, timeout=20)
+    _wait_until(lambda t: FIX_RULE not in t, timeout=20)
 
     # ① MEASURE
     m0 = await measure("① MEASURE — baseline (current Phoenix prompt)")
@@ -61,7 +61,7 @@ async def main() -> int:
     print("  proposed diff:")
     print("".join("    " + ln for ln in unified_diff(buggy, fixed).splitlines(keepends=True)))
     apply_fix(fixed)
-    applied = _wait_until(lambda t: 'get_pod_logs("payments")' in t and FIX_RULE in t, timeout=20)
+    applied = _wait_until(lambda t: FIX_RULE in t, timeout=20)
     print(f"  new prompt version applied via MCP ✅  (visible to agent: {applied})")
     print()
 

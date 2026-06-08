@@ -28,7 +28,7 @@ from target_agent.agent import build_agent  # noqa: E402  (also runs setup_traci
 from target_agent.prompt import INCIDENT_INPUT  # noqa: E402
 
 
-async def run() -> dict:
+async def run(incident_text: str = INCIDENT_INPUT) -> dict:
     from google.adk.runners import InMemoryRunner
 
     # Rebuild per run so a freshly-applied Phoenix prompt fix takes effect immediately.
@@ -45,7 +45,7 @@ async def run() -> dict:
     async for event in runner.run_async(
         user_id=user_id,
         session_id=session_id,
-        new_message=types.Content(role="user", parts=[types.Part(text=INCIDENT_INPUT)]),
+        new_message=types.Content(role="user", parts=[types.Part(text=incident_text)]),
     ):
         for part in (getattr(event.content, "parts", None) or []) if getattr(event, "content", None) else []:
             fc = getattr(part, "function_call", None)

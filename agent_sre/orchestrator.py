@@ -68,7 +68,7 @@ async def run_stream() -> AsyncIterator[Event]:
     """Reset → run the broken agent → diagnose live → measure baseline (0/1) → propose the fix."""
     yield "step_start", {"step": "reset"}
     await asyncio.to_thread(reset_to_buggy)
-    await _wait_until(lambda t: 'get_pod_logs("payment")' in t, timeout=20)
+    await _wait_until(lambda t: FIX_RULE not in t, timeout=20)
     yield "reset", {"ok": True}
 
     # One run of the broken target agent gives BOTH the left-column output and the 0/1 score.
@@ -99,9 +99,7 @@ async def apply_stream() -> AsyncIterator[Event]:
     buggy = await asyncio.to_thread(load_instruction)
     fixed = compute_fixed_instruction(buggy)
     await asyncio.to_thread(apply_fix, fixed)
-    visible = await _wait_until(
-        lambda t: 'get_pod_logs("payments")' in t and FIX_RULE in t, timeout=20
-    )
+    visible = await _wait_until(lambda t: FIX_RULE in t, timeout=20)
     yield "fix_applied", {"ok": visible}
 
     yield "step_start", {"step": "target_after"}

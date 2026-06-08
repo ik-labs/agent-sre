@@ -1,9 +1,8 @@
 """Fix step — derive the corrected instruction and apply it via the Phoenix `upsert-prompt` MCP tool.
 
 Deterministic transform of the buggy instruction (so the spine is reproducible):
-  1. `get_pod_logs("payment")`  ->  `get_pod_logs("payments")`
-  2. the misleading "internal pod label is `payment`" note -> `payments`
-  3. append a guard rule: empty tool output must NOT be read as "healthy".
+  1. the misleading internal-label note: `payment` -> `payments` (both backtick and quoted forms)
+  2. append a guard rule: empty logs + a HIGH error rate must NOT be read as "healthy".
 
 The resulting template is written to Phoenix as a NEW version of `incident-triage-agent`, which the
 target agent picks up on its next run (see target_agent/agent.py:build_agent).
@@ -18,15 +17,16 @@ from agent_sre.mcp_client import PhoenixMCP
 from target_agent.prompt_source import PROMPT_IDENTIFIER
 
 FIX_RULE = (
-    "If a tool returns no data, do NOT conclude the system is healthy. Re-check the service name "
-    "against the metrics you already retrieved (the operator's reported service) before concluding."
+    "If the logs come back empty BUT the metrics show a high error rate, do NOT conclude the system "
+    "is healthy — recheck the service name against the operator's reported service and retry before "
+    "concluding. Empty logs together with a LOW error rate genuinely indicate health (do not page)."
 )
 
 
 def compute_fixed_instruction(buggy: str) -> str:
     """Apply the deterministic corrections to the buggy instruction text."""
-    fixed = buggy.replace('get_pod_logs("payment")', 'get_pod_logs("payments")')
-    fixed = fixed.replace("`payment`", "`payments`")  # the misleading internal-label note
+    fixed = buggy.replace("`payment`", "`payments`")  # the misleading internal-label note (backtick)
+    fixed = fixed.replace('"payment"', '"payments"')  # ...and its quoted form
     if FIX_RULE not in fixed:
         fixed = fixed.rstrip() + "\n\nIMPORTANT: " + FIX_RULE + "\n"
     return fixed
