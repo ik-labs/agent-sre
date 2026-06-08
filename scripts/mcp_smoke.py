@@ -36,8 +36,9 @@ def main() -> int:
         print("ERROR: set PHOENIX_COLLECTOR_ENDPOINT and PHOENIX_API_KEY in .env", file=sys.stderr)
         return 2
 
-    cmd = ["npx", "-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url, "--apiKey", api_key]
-    print(f"spawning: npx -y @arizeai/phoenix-mcp@latest --baseUrl {base_url} --apiKey ***\n")
+    # Keep the API key out of argv (would show in `ps`); phoenix-mcp reads it from the environment.
+    cmd = ["npx", "-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url]
+    print(f"spawning: npx -y @arizeai/phoenix-mcp@latest --baseUrl {base_url}  (apiKey via env)\n")
     proc = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
@@ -45,6 +46,7 @@ def main() -> int:
         stderr=subprocess.PIPE,
         text=True,
         bufsize=1,
+        env={**os.environ, "PHOENIX_API_KEY": api_key},
     )
     assert proc.stdin and proc.stdout and proc.stderr
     # Keep stderr from blocking the pipe (npx is chatty).

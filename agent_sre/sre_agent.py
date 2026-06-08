@@ -67,7 +67,10 @@ def _phoenix_mcp_toolset(tool_filter: list[str]) -> MCPToolset:
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command="npx",
-                args=["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url, "--apiKey", api_key],
+                # Keep the API key OUT of argv (it would otherwise show in `ps`). The phoenix-mcp
+                # server reads PHOENIX_API_KEY from the environment; we pass it via env= below.
+                args=["-y", "@arizeai/phoenix-mcp@latest", "--baseUrl", base_url],
+                env={**os.environ, "PHOENIX_API_KEY": api_key},
             ),
             # npx may cold-start the server; give it room beyond the 5s default.
             timeout=60.0,
