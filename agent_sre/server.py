@@ -24,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
 from agent_sre.drift import drift_triage
-from agent_sre.orchestrator import apply_stream, guard_stream, run_stream
+from agent_sre.orchestrator import apply_stream, guard_stream, loop_stream, run_stream
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
@@ -83,6 +83,12 @@ async def apply():
 async def guard():
     """Stream: Guard (golden-set replay as a Phoenix experiment) → Prevent (MCP add-dataset-examples)."""
     return EventSourceResponse(_guarded_sse(guard_stream))
+
+
+@app.get("/api/loop")
+async def loop():
+    """Stream the entire 6-step loop automatically (no manual gates) in one connection."""
+    return EventSourceResponse(_guarded_sse(loop_stream))
 
 
 @app.get("/api/drift")

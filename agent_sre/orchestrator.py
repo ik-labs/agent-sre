@@ -141,3 +141,17 @@ async def guard_stream() -> AsyncIterator[Event]:
     yield "prevent_saved", {"dataset": DATASET_NAME, "count": n}
 
     yield "done", {"phase": "guard"}
+
+
+async def loop_stream() -> AsyncIterator[Event]:
+    """The whole 6-step loop in one stream (no manual gates): run → apply → guard.
+
+    Swallows the intermediate `done` events from the sub-streams so the UI sees a single terminal
+    `done` at the very end.
+    """
+    for sub in (run_stream, apply_stream):
+        async for name, payload in sub():
+            if name != "done":
+                yield name, payload
+    async for name, payload in guard_stream():
+        yield name, payload  # keep guard's final `done`

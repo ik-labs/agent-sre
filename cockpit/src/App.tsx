@@ -18,7 +18,7 @@ import { GuardCard } from "./components/GuardCard";
 import { PreventCard } from "./components/PreventCard";
 import { DriftTab } from "./components/DriftTab";
 
-type Phase = "idle" | "running" | "awaitingApply" | "applying" | "verified" | "guarding" | "complete";
+type Phase = "idle" | "running" | "complete";
 
 const INCIDENT =
   "Payments service is throwing 500s in production. Investigate and page the right team if needed.";
@@ -31,6 +31,7 @@ export default function App() {
   const [diagnose, setDiagnose] = useState<DiagnoseResult | null>(null);
   const [measure, setMeasure] = useState<MeasureResult | null>(null);
   const [fixDiff, setFixDiff] = useState<string | null>(null);
+  const [fixApplied, setFixApplied] = useState(false);
   const [verify, setVerify] = useState<MeasureResult | null>(null);
   const [guardCases, setGuardCases] = useState<GuardCase[]>([]);
   const [guardResult, setGuardResult] = useState<GuardResult | null>(null);
@@ -46,6 +47,7 @@ export default function App() {
     setDiagnose(null);
     setMeasure(null);
     setFixDiff(null);
+    setFixApplied(false);
     setVerify(null);
     setGuardCases([]);
     setGuardResult(null);
@@ -72,6 +74,9 @@ export default function App() {
       case "fix_proposed":
         setFixDiff((data as FixProposed).diff);
         break;
+      case "fix_applied":
+        setFixApplied(true);
+        break;
       case "verify":
         setVerify(data as MeasureResult);
         break;
@@ -84,22 +89,17 @@ export default function App() {
       case "prevent_saved":
         setPreventSaved(data as PreventSaved);
         break;
-      case "busy": {
+      case "busy":
         esRef.current?.close();
         setActiveStep(null);
         setNotice("Demo is busy — another run is in progress. Try again in a few seconds.");
-        setPhase((p) =>
-          p === "running" ? "idle" : p === "applying" ? "awaitingApply" : p === "guarding" ? "verified" : p,
-        );
+        setPhase("idle");
         break;
-      }
-      case "done": {
-        const phaseName = (data as { phase: string }).phase;
+      case "done":
         esRef.current?.close();
         setActiveStep(null);
-        setPhase(phaseName === "run" ? "awaitingApply" : phaseName === "apply" ? "verified" : "complete");
+        setPhase("complete");
         break;
-      }
     }
   }
 
@@ -107,22 +107,10 @@ export default function App() {
     reset();
     setNotice(null);
     setPhase("running");
-    esRef.current = streamSSE("/api/run", handle);
+    esRef.current = streamSSE("/api/loop", handle); // the whole 6-step loop, no manual gates
   }
 
-  function apply() {
-    setNotice(null);
-    setPhase("applying");
-    esRef.current = streamSSE("/api/apply", handle);
-  }
-
-  function guard() {
-    setNotice(null);
-    setPhase("guarding");
-    esRef.current = streamSSE("/api/guard", handle);
-  }
-
-  const busy = phase === "running" || phase === "applying" || phase === "guarding";
+  const busy = phase === "running";
 
   return (
     <div className="app">
@@ -151,23 +139,9 @@ export default function App() {
           <h2 className="col-title">Agent SRE — diagnose → measure → fix → verify → guard → prevent</h2>
           <DiagnoseCard data={diagnose} active={activeStep === "diagnose"} />
           <MeasureCard data={measure} active={activeStep === "measure"} />
-          <FixCard
-            diff={fixDiff}
-            active={activeStep === "fix"}
-            canApply={phase === "awaitingApply"}
-            applying={phase === "applying"}
-            applied={verify !== null}
-            onApply={apply}
-          />
+          <FixCard diff={fixDiff} active={activeStep === "fix" || activeStep === "apply"} applied={fixApplied} />
           <VerifyCard baseline={measure} verify={verify} active={activeStep === "verify"} />
-          <GuardCard
-            cases={guardCases}
-            result={guardResult}
-            active={activeStep === "guard"}
-            canStart={phase === "verified"}
-            running={phase === "guarding"}
-            onStart={guard}
-          />
+          <GuardCard cases={guardCases} result={guardResult} active={activeStep === "guard"} />
           <PreventCard saved={preventSaved} active={activeStep === "prevent"} />
         </section>
       </main>
