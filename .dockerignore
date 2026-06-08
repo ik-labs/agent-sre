@@ -1,0 +1,21 @@
+# Keep the build context small and never ship secrets / local artifacts.
+.git
+.gitignore
+.env
+*.env
+!.env.example
+.venv
+**/__pycache__
+**/*.pyc
+.python-version
+.DS_Store
+
+# Node / build outputs (stage 1 rebuilds the cockpit from source)
+cockpit/node_modules
+cockpit/dist
+
+# Not needed at runtime
+docs
+scripts
+Makefile
+README.md

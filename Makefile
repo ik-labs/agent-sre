@@ -1,4 +1,4 @@
-.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident seed-prompt diagnose measure spine server cockpit guard prevent drift-seed
+.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident seed-prompt diagnose measure spine server cockpit guard prevent drift-seed deploy
 
 help:
 	@echo "Agent SRE targets:"
@@ -38,6 +38,9 @@ prevent:
 
 drift-seed:
 	uv run python scripts/generate_drift_traces.py
+
+deploy:
+	bash scripts/deploy_cloud_run.sh
 
 server:
 	uv run uvicorn agent_sre.server:app --reload --port 8000
