@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
-from agent_sre.orchestrator import apply_stream, run_stream
+from agent_sre.orchestrator import apply_stream, guard_stream, run_stream
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
@@ -54,6 +54,12 @@ async def run():
 async def apply():
     """Stream: apply fix via MCP upsert-prompt → re-run → verify (1/1), output flips to paged."""
     return EventSourceResponse(_sse(apply_stream))
+
+
+@app.get("/api/guard")
+async def guard():
+    """Stream: Guard (golden-set replay as a Phoenix experiment) → Prevent (MCP add-dataset-examples)."""
+    return EventSourceResponse(_sse(guard_stream))
 
 
 # Serve the built cockpit at / when present (single public URL for Phase 5). Mounted last so /api wins.

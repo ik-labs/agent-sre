@@ -17,6 +17,8 @@ from typing import AsyncIterator, Tuple
 
 from agent_sre.eval import measure
 from agent_sre.fix import FIX_RULE, apply_fix, compute_fixed_instruction, reset_to_buggy, unified_diff
+from agent_sre.guard import ensure_fixed, log_experiment, replay_cases
+from agent_sre.prevent import DATASET_NAME, count_examples, save_failing_case
 from agent_sre.run_diagnose import diagnose
 from target_agent.prompt_source import load_instruction
 
@@ -110,3 +112,32 @@ async def apply_stream() -> AsyncIterator[Event]:
     yield "verify", _measure_payload(m1)
 
     yield "done", {"phase": "apply", "verify_score": m1["score"]}
+
+
+async def guard_stream() -> AsyncIterator[Event]:
+    """Guard: replay the golden set (streamed per case) as a Phoenix experiment → then Prevent."""
+    yield "step_start", {"step": "guard"}
+    await asyncio.to_thread(ensure_fixed)
+    rows: list[dict] = []
+    async for r in replay_cases():
+        rows.append(r)
+        yield "guard_case", {
+            "label": r["label"],
+            "passed": r["passed"],
+            "paged_team": r["paged_team"] or "no page",
+        }
+    url = await asyncio.to_thread(log_experiment, rows)
+    yield "guard_result", {
+        "all_pass": all(r["passed"] for r in rows),
+        "total": len(rows),
+        "passed": sum(1 for r in rows if r["passed"]),
+        "url": url,
+    }
+
+    # Prevent — save the failing case as a permanent dataset example via MCP.
+    yield "step_start", {"step": "prevent"}
+    await asyncio.to_thread(save_failing_case)
+    n = await asyncio.to_thread(count_examples)
+    yield "prevent_saved", {"dataset": DATASET_NAME, "count": n}
+
+    yield "done", {"phase": "guard"}

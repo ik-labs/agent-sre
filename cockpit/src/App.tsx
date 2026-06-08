@@ -1,14 +1,24 @@
 import { useRef, useState } from "react";
 import { streamSSE } from "./api";
-import type { DiagnoseResult, FixProposed, MeasureResult, TargetOutput } from "./types";
+import type {
+  DiagnoseResult,
+  FixProposed,
+  GuardCase,
+  GuardResult,
+  MeasureResult,
+  PreventSaved,
+  TargetOutput,
+} from "./types";
 import { TargetPanel } from "./components/TargetPanel";
 import { DiagnoseCard } from "./components/DiagnoseCard";
 import { MeasureCard } from "./components/MeasureCard";
 import { FixCard } from "./components/FixCard";
 import { VerifyCard } from "./components/VerifyCard";
+import { GuardCard } from "./components/GuardCard";
+import { PreventCard } from "./components/PreventCard";
 import { DriftTab } from "./components/DriftTab";
 
-type Phase = "idle" | "running" | "awaitingApply" | "applying" | "done";
+type Phase = "idle" | "running" | "awaitingApply" | "applying" | "verified" | "guarding" | "complete";
 
 const INCIDENT =
   "Payments service is throwing 500s in production. Investigate and page the right team if needed.";
@@ -22,6 +32,9 @@ export default function App() {
   const [measure, setMeasure] = useState<MeasureResult | null>(null);
   const [fixDiff, setFixDiff] = useState<string | null>(null);
   const [verify, setVerify] = useState<MeasureResult | null>(null);
+  const [guardCases, setGuardCases] = useState<GuardCase[]>([]);
+  const [guardResult, setGuardResult] = useState<GuardResult | null>(null);
+  const [preventSaved, setPreventSaved] = useState<PreventSaved | null>(null);
   const esRef = useRef<EventSource | null>(null);
 
   function reset() {
@@ -33,6 +46,9 @@ export default function App() {
     setMeasure(null);
     setFixDiff(null);
     setVerify(null);
+    setGuardCases([]);
+    setGuardResult(null);
+    setPreventSaved(null);
   }
 
   function handle(name: string, data: unknown) {
@@ -58,11 +74,20 @@ export default function App() {
       case "verify":
         setVerify(data as MeasureResult);
         break;
+      case "guard_case":
+        setGuardCases((prev) => [...prev, data as GuardCase]);
+        break;
+      case "guard_result":
+        setGuardResult(data as GuardResult);
+        break;
+      case "prevent_saved":
+        setPreventSaved(data as PreventSaved);
+        break;
       case "done": {
         const phaseName = (data as { phase: string }).phase;
         esRef.current?.close();
         setActiveStep(null);
-        setPhase(phaseName === "run" ? "awaitingApply" : "done");
+        setPhase(phaseName === "run" ? "awaitingApply" : phaseName === "apply" ? "verified" : "complete");
         break;
       }
     }
@@ -79,7 +104,12 @@ export default function App() {
     esRef.current = streamSSE("/api/apply", handle);
   }
 
-  const busy = phase === "running" || phase === "applying";
+  function guard() {
+    setPhase("guarding");
+    esRef.current = streamSSE("/api/guard", handle);
+  }
+
+  const busy = phase === "running" || phase === "applying" || phase === "guarding";
 
   return (
     <div className="app">
@@ -103,7 +133,7 @@ export default function App() {
         </section>
 
         <section className="col col-sre">
-          <h2 className="col-title">Agent SRE — diagnose → measure → fix → verify</h2>
+          <h2 className="col-title">Agent SRE — diagnose → measure → fix → verify → guard → prevent</h2>
           <DiagnoseCard data={diagnose} active={activeStep === "diagnose"} />
           <MeasureCard data={measure} active={activeStep === "measure"} />
           <FixCard
@@ -115,6 +145,15 @@ export default function App() {
             onApply={apply}
           />
           <VerifyCard baseline={measure} verify={verify} active={activeStep === "verify"} />
+          <GuardCard
+            cases={guardCases}
+            result={guardResult}
+            active={activeStep === "guard"}
+            canStart={phase === "verified"}
+            running={phase === "guarding"}
+            onStart={guard}
+          />
+          <PreventCard saved={preventSaved} active={activeStep === "prevent"} />
         </section>
       </main>
     </div>

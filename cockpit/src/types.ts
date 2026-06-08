@@ -24,4 +24,22 @@ export interface FixProposed {
   diff: string;
 }
 
+export interface GuardCase {
+  label: string;
+  passed: boolean;
+  paged_team: string;
+}
+
+export interface GuardResult {
+  all_pass: boolean;
+  total: number;
+  passed: number;
+  url: string | null;
+}
+
+export interface PreventSaved {
+  dataset: string;
+  count: number;
+}
+
 export type SSEHandler = (event: string, data: unknown) => void;

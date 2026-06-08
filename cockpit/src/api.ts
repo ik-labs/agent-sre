@@ -9,6 +9,9 @@ const EVENTS = [
   "fix_proposed",
   "fix_applied",
   "verify",
+  "guard_case",
+  "guard_result",
+  "prevent_saved",
   "done",
 ];
 

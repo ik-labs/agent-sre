@@ -38,28 +38,23 @@ def ensure_fixed() -> None:
         time.sleep(1)
 
 
-async def _replay() -> list[dict]:
-    """Run every golden incident through the patched agent. Authoritative pass/fail."""
-    rows: list[dict] = []
+async def replay_cases():
+    """Yield one result row per golden incident as it completes (patched agent). Authoritative."""
     for case in GOLDEN:
         res = await run_incident(case["incident"])
         team = paged_team(res["calls"])
-        passed = case_passed(case["expect_page"], case["expect_team"], res["calls"])
-        rows.append(
-            {
-                "label": case["label"],
-                "incident": case["incident"],
-                "expect_page": case["expect_page"],
-                "expect_team": case["expect_team"],
-                "paged_team": team,
-                "passed": passed,
-                "final": res["final"],
-            }
-        )
-    return rows
+        yield {
+            "label": case["label"],
+            "incident": case["incident"],
+            "expect_page": case["expect_page"],
+            "expect_team": case["expect_team"],
+            "paged_team": team,
+            "passed": case_passed(case["expect_page"], case["expect_team"], res["calls"]),
+            "final": res["final"],
+        }
 
 
-def _log_experiment(rows: list[dict]) -> Optional[str]:
+def log_experiment(rows: list[dict]) -> Optional[str]:
     """Best-effort: record the replay as a Phoenix dataset + experiment. Returns the experiment URL."""
     try:
         from phoenix.client import Client
@@ -109,9 +104,9 @@ def _log_experiment(rows: list[dict]) -> Optional[str]:
 async def run_guard() -> dict:
     """Ensure patched, replay the golden set, log a Phoenix experiment. Returns rows + all_pass + url."""
     await asyncio.to_thread(ensure_fixed)
-    rows = await _replay()
+    rows = [r async for r in replay_cases()]
     all_pass = all(r["passed"] for r in rows)
-    url = await asyncio.to_thread(_log_experiment, rows)
+    url = await asyncio.to_thread(log_experiment, rows)
     return {"rows": rows, "all_pass": all_pass, "experiment_url": url, "total": len(rows),
             "passed": sum(1 for r in rows if r["passed"])}
 
