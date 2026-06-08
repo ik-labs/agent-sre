@@ -41,7 +41,7 @@ export function TargetPanel({ incident, before, after, activeStep }: Props) {
       </div>
 
       {before ? (
-        <OutputBlock data={before} label="Agent's answer (before fix)" />
+        <OutputBlock data={before} label="Agent's answer (before fix) — missed the real outage" />
       ) : (
         <div className="placeholder">
           {activeStep === "target_before" ? "Running the agent…" : "Press “Run incident”."}
@@ -49,7 +49,7 @@ export function TargetPanel({ incident, before, after, activeStep }: Props) {
       )}
 
       {after ? (
-        <OutputBlock data={after} label="Agent's answer (after fix)" />
+        <OutputBlock data={after} label="Agent's answer (after fix) — now correctly escalates the real outage" />
       ) : (
         activeStep === "target_after" && (
           <div className="placeholder">Re-running with the fix…</div>

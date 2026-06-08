@@ -10,6 +10,7 @@ export interface TargetOutput {
 export interface DiagnoseResult {
   tools: string[];
   text: string;
+  url?: string | null;
 }
 
 export interface MeasureResult {

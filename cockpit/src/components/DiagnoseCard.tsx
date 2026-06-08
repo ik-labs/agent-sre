@@ -15,6 +15,11 @@ export function DiagnoseCard({ data, active }: { data: DiagnoseResult | null; ac
             ))}
           </div>
           <pre className="diagnosis">{data.text}</pre>
+          {data.url && (
+            <a className="exp-link" href={data.url} target="_blank" rel="noreferrer">
+              view traces in Phoenix ↗
+            </a>
+          )}
         </>
       )}
     </StepCard>

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import AsyncIterator, Tuple
+from typing import AsyncIterator, Optional, Tuple
 
 from agent_sre.eval import measure
 from agent_sre.fix import FIX_RULE, apply_fix, compute_fixed_instruction, reset_to_buggy, unified_diff
@@ -24,6 +24,34 @@ from agent_sre.run_diagnose import diagnose
 from target_agent.prompt_source import load_instruction
 
 Event = Tuple[str, dict]
+
+# The incident-agent project's Phoenix URL, warmed once at server startup (see server.py) so the
+# Diagnose card can deep-link to the traces without a per-run MCP lookup.
+INCIDENT_PROJECT_URL: Optional[str] = None
+
+
+async def warm_project_url() -> None:
+    """Resolve <PHOENIX_ENDPOINT>/projects/<incident-agent id> once (best-effort)."""
+    global INCIDENT_PROJECT_URL
+    base = (os.environ.get("PHOENIX_COLLECTOR_ENDPOINT") or "").rstrip("/")
+    if not base:
+        return
+
+    def _lookup() -> Optional[str]:
+        from agent_sre.mcp_client import PhoenixMCP
+
+        with PhoenixMCP() as mcp:
+            projects = mcp.call("list-projects", {})
+        if isinstance(projects, list):
+            for p in projects:
+                if isinstance(p, dict) and p.get("name") == "incident-agent" and p.get("id"):
+                    return f"{base}/projects/{p['id']}"
+        return None
+
+    try:
+        INCIDENT_PROJECT_URL = await asyncio.to_thread(_lookup)
+    except Exception:
+        INCIDENT_PROJECT_URL = None
 
 
 def _verdict_word(final: str) -> str:
@@ -82,7 +110,7 @@ async def run_stream() -> AsyncIterator[Event]:
     # Live, agentic diagnosis over the trace just produced (SRE = ADK + Phoenix MCP).
     yield "step_start", {"step": "diagnose"}
     d = await diagnose()
-    yield "diagnose", {"tools": d["tool_calls"], "text": d["diagnosis"]}
+    yield "diagnose", {"tools": d["tool_calls"], "text": d["diagnosis"], "url": INCIDENT_PROJECT_URL}
 
     yield "step_start", {"step": "measure"}
     yield "measure", _measure_payload(m0)
