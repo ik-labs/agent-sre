@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+*.env
+!.env.example
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+.python-version.local
+
+# Node (cockpit, MCP)
+node_modules/
+cockpit/dist/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local MCP config that may contain a key (committed version uses a placeholder)
+agent_sre/mcp_config.local.json

@@ -1,0 +1,19 @@
+{
+  "_comment": "Phoenix MCP server config — the Agent SRE's action layer (Diagnose reads traces/spans; Fix calls upsert-prompt). The apiKey/baseUrl placeholders are substituted from PHOENIX_API_KEY / PHOENIX_COLLECTOR_ENDPOINT at runtime (see scripts/mcp_smoke.py). Do NOT commit a real key here.",
+  "mcpServers": {
+    "phoenix": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@arizeai/phoenix-mcp@latest",
+        "--baseUrl",
+        "${PHOENIX_COLLECTOR_ENDPOINT}",
+        "--apiKey",
+        "${PHOENIX_API_KEY}"
+      ]
+    },
+    "phoenix-docs": {
+      "url": "https://arizeai-433a7140.mintlify.app/mcp"
+    }
+  }
+}
