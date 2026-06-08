@@ -294,13 +294,21 @@ adk deploy cloud_run \
      `setup_tracing(incident-agent)`, and the global tracer singleton then ignored the drift script's
      `drift-watch` registration. Fixed by exposing `root_agent` lazily via `__getattr__`.
 
-### Phase 5 — Ship (Day 3 afternoon/evening)
-- [ ] Deploy to Cloud Run via `adk deploy cloud_run ... --with_ui --min-instances=1` (see GCP section).
-- [ ] Allow unauthenticated access; confirm public URL works for a cold visitor (not just you).
-- [ ] Record 3-min demo video (script in build spec); upload to YouTube/Vimeo, subtitle if needed.
-- [ ] Fill the 3 open sections of `devpost-writeup-skeleton.md`.
-- [ ] Repo public, license detectable in GitHub "About", README with run instructions.
-- [ ] Select Arize track; submit Devpost form WITH BUFFER before June 11, 2:00 PM PDT.
+### Phase 5 — Ship (Day 3 afternoon/evening) — ✅ DEPLOYED (2026-06-08)
+- [x] Deploy to Cloud Run. NOTE: `adk deploy cloud_run` does NOT fit — our app is a FastAPI server
+      that serves the cockpit + spawns the npx Phoenix MCP server, so it needs **Python + Node** in
+      one image. Custom multi-stage `Dockerfile` + `make deploy` (`scripts/deploy_cloud_run.sh`).
+      Live: **https://agent-sre-389498242223.us-central1.run.app** (`--min-instances=1`, 2Gi).
+- [x] Unauthenticated; cold-visit verified (health, cockpit, `/api/drift`, partial `/api/run` —
+      proves Vertex ADC + npx MCP work in-container). Abuse bounded by an in-process concurrency
+      lock + hourly cap (the Phase-3 "auth gate" TODO — resolved as rate-limit, since judges need
+      unauthenticated access). Secrets via Secret Manager; Vertex via runtime SA (no key in image).
+- [ ] Record 3-min demo video — **USER** (shot list in README).
+- [x] Filled the 3 open sections of `devpost-writeup-skeleton.md` (+ corrected Gemini-3→2.5 and the
+      MCP-runs-evals inaccuracy).
+- [~] Repo created **private** `ik-labs/agent-sre` (Apache-2.0 detected, no secrets, README with
+      run/deploy instructions). **USER: flip to public before submitting.**
+- [ ] Select Arize track; submit Devpost form WITH BUFFER before June 11, 2:00 PM PDT — **USER**.
 
 ---
 
