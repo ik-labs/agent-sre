@@ -19,11 +19,14 @@ export function DriftTab() {
   }, []);
 
   const text = d
-    ? `Drift watch: ${d.n_affected}/${d.n_traces} traces skipped log inspection (triage only)`
-    : "Drift watch: scanning traces…";
+    ? `2nd agent watch · ${d.n_affected}/${d.n_traces} runs skipped log inspection — flagged, not yet fixed`
+    : "2nd agent watch · scanning traces…";
 
   return (
-    <div className="drift" title="Live triage of an intermittent 2nd bug — diagnose only">
+    <div
+      className="drift"
+      title="A separate, intermittently-buggy agent the SRE monitors. Read live from real Phoenix traces; surfaced (triaged) but NOT fixed in this demo — unlike the payments incident on the left."
+    >
       <span className="drift-dot" />
       {text}
     </div>
