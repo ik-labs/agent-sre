@@ -31,6 +31,7 @@ export default function App() {
   const [diagnose, setDiagnose] = useState<DiagnoseResult | null>(null);
   const [measure, setMeasure] = useState<MeasureResult | null>(null);
   const [fixDiff, setFixDiff] = useState<string | null>(null);
+  const [fixUrl, setFixUrl] = useState<string | null>(null);
   const [fixApplied, setFixApplied] = useState(false);
   const [verify, setVerify] = useState<MeasureResult | null>(null);
   const [guardCases, setGuardCases] = useState<GuardCase[]>([]);
@@ -47,6 +48,7 @@ export default function App() {
     setDiagnose(null);
     setMeasure(null);
     setFixDiff(null);
+    setFixUrl(null);
     setFixApplied(false);
     setVerify(null);
     setGuardCases([]);
@@ -73,6 +75,7 @@ export default function App() {
         break;
       case "fix_proposed":
         setFixDiff((data as FixProposed).diff);
+        setFixUrl((data as FixProposed).url ?? null);
         break;
       case "fix_applied":
         setFixApplied(true);
@@ -145,7 +148,12 @@ export default function App() {
           <h2 className="col-title">Agent SRE — diagnose → measure → fix → verify → guard → prevent</h2>
           <DiagnoseCard data={diagnose} active={activeStep === "diagnose"} />
           <MeasureCard data={measure} active={activeStep === "measure"} />
-          <FixCard diff={fixDiff} active={activeStep === "fix" || activeStep === "apply"} applied={fixApplied} />
+          <FixCard
+            diff={fixDiff}
+            url={fixUrl}
+            active={activeStep === "fix" || activeStep === "apply"}
+            applied={fixApplied}
+          />
           <VerifyCard
             baseline={measure}
             verify={verify}

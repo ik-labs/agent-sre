@@ -23,6 +23,7 @@ export interface MeasureResult {
 
 export interface FixProposed {
   diff: string;
+  url?: string | null;
 }
 
 export interface GuardCase {

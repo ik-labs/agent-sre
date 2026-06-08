@@ -2,6 +2,7 @@ import { StepCard } from "./StepCard";
 
 interface Props {
   diff: string | null;
+  url?: string | null;
   active: boolean;
   applied: boolean;
 }
@@ -27,13 +28,18 @@ function DiffView({ diff }: { diff: string }) {
   );
 }
 
-export function FixCard({ diff, active, applied }: Props) {
+export function FixCard({ diff, url, active, applied }: Props) {
   return (
     <StepCard step="3 · Fix" title="Patch the prompt via Phoenix MCP upsert-prompt" active={active} done={applied}>
       {diff && (
         <>
           <DiffView diff={diff} />
           {applied && <div className="applied-tag">Applied via MCP `upsert-prompt` ✓</div>}
+          {url && (
+            <a className="exp-link" href={url} target="_blank" rel="noreferrer">
+              view prompt in Phoenix ↗
+            </a>
+          )}
         </>
       )}
     </StepCard>

@@ -25,33 +25,45 @@ from target_agent.prompt_source import load_instruction
 
 Event = Tuple[str, dict]
 
-# The incident-agent project's Phoenix URL, warmed once at server startup (see server.py) so the
-# Diagnose card can deep-link to the traces without a per-run MCP lookup.
+# Phoenix deep-link URLs, warmed once at server startup (see server.py) so the Diagnose/Fix cards
+# can link out without a per-run MCP lookup.
 INCIDENT_PROJECT_URL: Optional[str] = None
+PROMPT_URL: Optional[str] = None
 
 
-async def warm_project_url() -> None:
-    """Resolve <PHOENIX_ENDPOINT>/projects/<incident-agent id> once (best-effort)."""
-    global INCIDENT_PROJECT_URL
+async def warm_phoenix_links() -> None:
+    """Resolve the incident-agent project + the managed prompt URLs once (best-effort, one session)."""
+    global INCIDENT_PROJECT_URL, PROMPT_URL
     base = (os.environ.get("PHOENIX_COLLECTOR_ENDPOINT") or "").rstrip("/")
     if not base:
         return
 
-    def _lookup() -> Optional[str]:
+    def _lookup() -> Tuple[Optional[str], Optional[str]]:
         from agent_sre.mcp_client import PhoenixMCP
+        from target_agent.prompt_source import PROMPT_IDENTIFIER
 
         with PhoenixMCP() as mcp:
             projects = mcp.call("list-projects", {})
-        if isinstance(projects, list):
-            for p in projects:
-                if isinstance(p, dict) and p.get("name") == "incident-agent" and p.get("id"):
-                    return f"{base}/projects/{p['id']}"
-        return None
+            prompts = mcp.call("list-prompts", {})
+
+        def _find(items, name) -> Optional[str]:
+            if isinstance(items, list):
+                for it in items:
+                    if isinstance(it, dict) and it.get("name") == name and it.get("id"):
+                        return it["id"]
+            return None
+
+        proj_id = _find(projects, "incident-agent")
+        prompt_id = _find(prompts, PROMPT_IDENTIFIER)
+        return (
+            f"{base}/projects/{proj_id}" if proj_id else None,
+            f"{base}/prompts/{prompt_id}" if prompt_id else None,
+        )
 
     try:
-        INCIDENT_PROJECT_URL = await asyncio.to_thread(_lookup)
+        INCIDENT_PROJECT_URL, PROMPT_URL = await asyncio.to_thread(_lookup)
     except Exception:
-        INCIDENT_PROJECT_URL = None
+        pass
 
 
 def _verdict_word(final: str) -> str:
@@ -119,7 +131,7 @@ async def run_stream() -> AsyncIterator[Event]:
     yield "step_start", {"step": "fix"}
     buggy = await asyncio.to_thread(load_instruction)
     fixed = compute_fixed_instruction(buggy)
-    yield "fix_proposed", {"diff": unified_diff(buggy, fixed)}
+    yield "fix_proposed", {"diff": unified_diff(buggy, fixed), "url": PROMPT_URL}
 
     yield "done", {"phase": "run", "baseline_score": m0["score"]}
 

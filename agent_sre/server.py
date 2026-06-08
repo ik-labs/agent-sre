@@ -27,7 +27,7 @@ from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
 from agent_sre.drift import drift_triage
-from agent_sre.orchestrator import apply_stream, guard_stream, loop_stream, run_stream, warm_project_url
+from agent_sre.orchestrator import apply_stream, guard_stream, loop_stream, run_stream, warm_phoenix_links
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
@@ -137,7 +137,7 @@ async def _refresh_drift() -> dict:
 async def _warm() -> None:
     # Non-blocking: don't delay readiness. Pre-resolve the drift triage + the Phoenix project URL.
     asyncio.create_task(_refresh_drift())
-    asyncio.create_task(warm_project_url())
+    asyncio.create_task(warm_phoenix_links())
 
 
 @app.get("/api/drift")
