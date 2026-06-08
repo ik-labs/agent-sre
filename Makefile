@@ -8,9 +8,13 @@ help:
 	@echo "  make mcp-smoke    - start @arizeai/phoenix-mcp and list its tools"
 	@echo "  make verify       - model-probe + smoke-trace + mcp-smoke in sequence"
 	@echo "  make incident     - run the broken target agent; print the failure chain"
+	@echo "  make seed-prompt  - seed the agent instruction into the Phoenix prompt store"
 
 incident:
 	uv run python -m target_agent.run_incident
+
+seed-prompt:
+	uv run python scripts/seed_prompt.py
 
 setup:
 	uv sync

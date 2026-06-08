@@ -19,16 +19,18 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 from target_agent.fixtures import get_metrics, get_oncall, get_pod_logs, page_oncall
 from target_agent.instrumentation import setup_tracing
-from target_agent.prompt import INCIDENT_AGENT_INSTRUCTION
+from target_agent.prompt_source import load_instruction
 
 setup_tracing()
 
 _MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
+# Pull the instruction from the Phoenix prompt store so the SRE's Fix (upsert-prompt) is LIVE.
+# Falls back to the local buggy constant if Phoenix is unreachable. See prompt_source.py.
 root_agent = Agent(
     model=_MODEL,
     name="incident_triage_agent",
-    instruction=INCIDENT_AGENT_INSTRUCTION,
+    instruction=load_instruction(),
     tools=[
         FunctionTool(func=get_metrics),
         FunctionTool(func=get_pod_logs),
