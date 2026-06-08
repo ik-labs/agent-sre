@@ -101,6 +101,20 @@ body {
 .apply-btn { background: var(--green); color: #07120b; border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 700; cursor: pointer; }
 .apply-btn:disabled { opacity: 0.55; cursor: default; }
 
+/* Call-to-action: when a button is the next required step, make it unmissable. */
+.cta-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.apply-btn.cta { padding: 11px 20px; font-size: 15px; animation: cta-pulse 1.5s ease-in-out infinite; }
+.apply-btn.cta:hover { animation: none; }
+@keyframes cta-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(54,194,121,0.55); transform: translateY(0); }
+  50%  { box-shadow: 0 0 0 9px rgba(54,194,121,0); transform: translateY(-1px); }
+  100% { box-shadow: 0 0 0 0 rgba(54,194,121,0); transform: translateY(0); }
+}
+.cta-hint { color: var(--green); font-size: 12px; font-weight: 600; animation: hint-fade 1.5s ease-in-out infinite; }
+@keyframes hint-fade { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+/* The card holding the active CTA gets a soft green ring so it stands out in the stack. */
+.card.tone-neutral:has(.apply-btn.cta) { border-color: var(--green); box-shadow: 0 0 0 1px rgba(54,194,121,0.25); }
+
 /* Verify flip — the climax */
 .flip { display: flex; flex-direction: column; gap: 12px; animation: rise 0.4s ease; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -132,4 +146,25 @@ body {
 .drift-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-@media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+/* --- Responsive --- */
+@media (max-width: 880px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .app { padding: 16px 12px 48px; }
+  .topbar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .topbar-right { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
+  .brand h1 { font-size: 20px; }
+  .brand p { font-size: 13px; }
+  .run-btn { padding: 10px 16px; white-space: nowrap; }
+  .drift { font-size: 11px; }
+  /* Verify flip + guard rows: let them wrap instead of overflowing. */
+  .flip-row { flex-wrap: wrap; gap: 8px; }
+  .flip-label { width: auto; }
+  .guard-result { flex-wrap: wrap; gap: 8px; }
+  .diff, .diagnosis { font-size: 11px; }
+  .diff-line { padding: 1px 8px; }
+  .verdict { font-size: 15px; }
+  .cta-hint { width: 100%; }
+}
