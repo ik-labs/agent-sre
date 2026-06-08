@@ -15,10 +15,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
+from agent_sre.drift import drift_triage
 from agent_sre.orchestrator import apply_stream, guard_stream, run_stream
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
@@ -60,6 +62,12 @@ async def apply():
 async def guard():
     """Stream: Guard (golden-set replay as a Phoenix experiment) → Prevent (MCP add-dataset-examples)."""
     return EventSourceResponse(_sse(guard_stream))
+
+
+@app.get("/api/drift")
+async def drift() -> dict:
+    """Live triage of the intermittent 2nd bug from real drift-watch traces (read-only)."""
+    return await run_in_threadpool(drift_triage)
 
 
 # Serve the built cockpit at / when present (single public URL for Phase 5). Mounted last so /api wins.
