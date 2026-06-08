@@ -7,6 +7,7 @@ the SRE handling a realistic, noisy backlog beyond the single clean spine bug.
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 
 from agent_sre.mcp_client import PhoenixMCP
@@ -41,7 +42,8 @@ def drift_triage() -> dict:
         if total
         else "no drift traces found — run `make drift-seed` first"
     )
-    return {"n_traces": total, "n_affected": affected, "summary": summary}
+    phoenix_url = (os.environ.get("PHOENIX_COLLECTOR_ENDPOINT") or "").rstrip("/") or None
+    return {"n_traces": total, "n_affected": affected, "summary": summary, "phoenix_url": phoenix_url}
 
 
 if __name__ == "__main__":

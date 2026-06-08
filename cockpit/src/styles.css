@@ -40,6 +40,20 @@ body {
 }
 .run-btn:disabled { opacity: 0.55; cursor: default; }
 
+/* Password gate */
+.gate-loading { min-height: 100vh; }
+.gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.gate-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 28px; width: 100%; max-width: 360px; text-align: center; }
+.gate-card h1 { margin: 0 0 6px; font-size: 22px; }
+.gate-card p { color: var(--muted); margin: 0 0 16px; font-size: 13px; }
+.gate-card input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); font-size: 14px; margin-bottom: 12px; }
+.gate-card button { width: 100%; background: var(--accent); color: #0a0d12; border: 0; border-radius: 8px; padding: 10px; font-weight: 700; cursor: pointer; }
+.gate-card button:disabled { opacity: 0.5; cursor: default; }
+.gate-error { color: var(--red); font-size: 13px; margin-bottom: 10px; }
+
+/* Drift + Phoenix link in the header */
+.drift-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+
 /* Busy notice */
 .notice { background: var(--red-dim); border: 1px solid #5a2b2b; color: #f3b6b1; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; }
 

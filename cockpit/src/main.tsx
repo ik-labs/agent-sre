@@ -1,10 +1,13 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { Gate } from "./components/Gate";
 import "./styles.css";
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <Gate>
+      <App />
+    </Gate>
   </React.StrictMode>,
 );

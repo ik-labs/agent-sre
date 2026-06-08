@@ -13,6 +13,7 @@ Interactive flow (locked with user):
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import AsyncIterator, Tuple
 
 from agent_sre.eval import measure
@@ -136,9 +137,12 @@ async def guard_stream() -> AsyncIterator[Event]:
 
     # Prevent — save the failing case as a permanent dataset example via MCP.
     yield "step_start", {"step": "prevent"}
-    await asyncio.to_thread(save_failing_case)
+    saved = await asyncio.to_thread(save_failing_case)
     n = await asyncio.to_thread(count_examples)
-    yield "prevent_saved", {"dataset": DATASET_NAME, "count": n}
+    base = (os.environ.get("PHOENIX_COLLECTOR_ENDPOINT") or "").rstrip("/")
+    ds_id = (saved.get("result") or {}).get("dataset_id") if isinstance(saved.get("result"), dict) else None
+    ds_url = f"{base}/datasets/{ds_id}/examples" if base and ds_id else None
+    yield "prevent_saved", {"dataset": DATASET_NAME, "count": n, "url": ds_url}
 
     yield "done", {"phase": "guard"}
 

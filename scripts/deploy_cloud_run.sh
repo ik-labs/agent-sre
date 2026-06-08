@@ -14,6 +14,8 @@ cd "$(dirname "$0")/.."
 # Phoenix key from local .env -> Secret Manager (never baked into the image or repo).
 PHOENIX_API_KEY="$(grep -E '^PHOENIX_API_KEY=' .env | cut -d= -f2-)"
 [ -n "$PHOENIX_API_KEY" ] || { echo "PHOENIX_API_KEY missing from .env"; exit 1; }
+# Optional cockpit password gate (kept out of the repo; empty => open).
+APP_PASSWORD="$(grep -E '^APP_PASSWORD=' .env | cut -d= -f2- || true)"
 
 gcloud config set project "$PROJECT" >/dev/null
 gcloud services enable secretmanager.googleapis.com run.googleapis.com \
@@ -39,7 +41,7 @@ gcloud run deploy "$SERVICE" \
   --allow-unauthenticated \
   --min-instances=1 \
   --memory 2Gi --cpu 1 --timeout 600 \
-  --set-env-vars "GOOGLE_GENAI_USE_VERTEXAI=1,GOOGLE_CLOUD_PROJECT=${PROJECT},GOOGLE_CLOUD_LOCATION=${REGION},GEMINI_MODEL=gemini-2.5-flash,PHOENIX_COLLECTOR_ENDPOINT=https://app.phoenix.arize.com/s/phx-jp,PHOENIX_PROJECT_NAME=incident-agent" \
+  --set-env-vars "^@@^GOOGLE_GENAI_USE_VERTEXAI=1@@GOOGLE_CLOUD_PROJECT=${PROJECT}@@GOOGLE_CLOUD_LOCATION=${REGION}@@GEMINI_MODEL=gemini-2.5-flash@@PHOENIX_COLLECTOR_ENDPOINT=https://app.phoenix.arize.com/s/phx-jp@@PHOENIX_PROJECT_NAME=incident-agent@@APP_PASSWORD=${APP_PASSWORD}" \
   --set-secrets "PHOENIX_API_KEY=phoenix-api-key:latest"
 
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format='value(status.url)')"

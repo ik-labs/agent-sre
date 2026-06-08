@@ -95,6 +95,12 @@ export default function App() {
         setNotice("Demo is busy — another run is in progress. Try again in a few seconds.");
         setPhase("idle");
         break;
+      case "unauthorized":
+        esRef.current?.close();
+        setActiveStep(null);
+        setNotice("Session expired — please refresh and re-enter the password.");
+        setPhase("idle");
+        break;
       case "done":
         esRef.current?.close();
         setActiveStep(null);

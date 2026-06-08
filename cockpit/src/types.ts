@@ -40,6 +40,7 @@ export interface GuardResult {
 export interface PreventSaved {
   dataset: string;
   count: number;
+  url?: string | null;
 }
 
 export type SSEHandler = (event: string, data: unknown) => void;

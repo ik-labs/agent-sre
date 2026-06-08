@@ -11,15 +11,18 @@ rather than auth: only one stream runs at a time, and over the cap callers get a
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
+import os
 import time
 from collections import deque
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
@@ -29,6 +32,22 @@ from agent_sre.orchestrator import apply_stream, guard_stream, loop_stream, run_
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 app = FastAPI(title="Agent SRE Cockpit")
+
+# --- Optional shared-password gate (deters bots; weak by design) ---------------------------------
+# Empty => no gate (open). Set via env (.env / Cloud Run), never hardcoded. The cockpit user types
+# the password; the frontend sends it as a `key` query param (EventSource can't set headers).
+_APP_PASSWORD = (os.environ.get("APP_PASSWORD") or "").strip()
+
+
+def _authorized(request: Request) -> bool:
+    if not _APP_PASSWORD:
+        return True
+    key = request.query_params.get("key") or request.headers.get("x-demo-key") or ""
+    return hmac.compare_digest(key, _APP_PASSWORD)
+
+
+async def _unauthorized_sse():
+    yield {"event": "unauthorized", "data": "{}"}
 
 # Dev: the Vite dev server runs on :5173. In production the UI is served from this same origin.
 app.add_middleware(
@@ -67,28 +86,38 @@ async def health() -> dict:
     return {"ok": True}
 
 
+@app.get("/api/check")
+async def check(request: Request) -> dict:
+    """Whether the demo is password-gated, and whether the supplied key is valid."""
+    return {"gated": bool(_APP_PASSWORD), "ok": _authorized(request)}
+
+
+def _gated_stream(request: Request, generator):
+    return _guarded_sse(generator) if _authorized(request) else _unauthorized_sse()
+
+
 @app.get("/api/run")
-async def run():
+async def run(request: Request):
     """Stream: reset → broken output → live diagnose → measure (0/1) → proposed fix diff."""
-    return EventSourceResponse(_guarded_sse(run_stream))
+    return EventSourceResponse(_gated_stream(request, run_stream))
 
 
 @app.get("/api/apply")
-async def apply():
+async def apply(request: Request):
     """Stream: apply fix via MCP upsert-prompt → re-run → verify (1/1), output flips to paged."""
-    return EventSourceResponse(_guarded_sse(apply_stream))
+    return EventSourceResponse(_gated_stream(request, apply_stream))
 
 
 @app.get("/api/guard")
-async def guard():
+async def guard(request: Request):
     """Stream: Guard (golden-set replay as a Phoenix experiment) → Prevent (MCP add-dataset-examples)."""
-    return EventSourceResponse(_guarded_sse(guard_stream))
+    return EventSourceResponse(_gated_stream(request, guard_stream))
 
 
 @app.get("/api/loop")
-async def loop():
+async def loop(request: Request):
     """Stream the entire 6-step loop automatically (no manual gates) in one connection."""
-    return EventSourceResponse(_guarded_sse(loop_stream))
+    return EventSourceResponse(_gated_stream(request, loop_stream))
 
 
 # Drift triage spawns the npx MCP server (~10-15s cold), so cache it: the header resolves instantly
@@ -110,8 +139,10 @@ async def _warm_drift() -> None:
 
 
 @app.get("/api/drift")
-async def drift() -> dict:
+async def drift(request: Request):
     """Live triage of the intermittent 2nd bug (cached read of real drift-watch traces)."""
+    if not _authorized(request):
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     fresh = _drift_cache["value"] is not None and time.time() - _drift_cache["ts"] <= _DRIFT_TTL
     return _drift_cache["value"] if fresh else await _refresh_drift()
 

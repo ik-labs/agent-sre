@@ -7,9 +7,11 @@ agent's code.
 Built for the **Google Cloud Rapid Agent Hackathon, Arize track**. Gemini via Vertex AI · Google
 ADK · Arize Phoenix (tracing + evals) · Phoenix MCP (the SRE's action layer) · Cloud Run.
 
-> **🔗 Live demo:** https://agent-sre-389498242223.us-central1.run.app
-> Click **Run incident** → watch the broken agent fail, the SRE diagnose it via Phoenix MCP, prove
-> the bug (0/1), apply the fix, and re-run live to **1/1** — then **Apply Fix** → **Guard & Prevent**.
+> **🔗 Live demo:** https://agent-sre-389498242223.us-central1.run.app — **password: `admin2000`**
+> Click **Run incident** once → watch the whole loop run autonomously: the broken agent fails, the
+> SRE diagnoses it via Phoenix MCP, proves the bug (0/1), patches the prompt, re-runs live to **1/1**
+> (`healthy ❌ → paged ✅`), then Guard 4/4 and Prevent. (The password is a light bot-deterrent —
+> remove it by unsetting `APP_PASSWORD`.)
 
 ## What it does (the six-step loop)
 

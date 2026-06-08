@@ -11,11 +11,18 @@ export function PreventCard({ saved, active }: { saved: PreventSaved | null; act
       tone={saved ? "pass" : "neutral"}
     >
       {saved && (
-        <p className="prevent-line">
-          Saved the failing case to dataset <code className="chip">{saved.dataset}</code> via MCP{" "}
-          <code className="chip">add-dataset-examples</code>
-          {saved.count > 0 && <> — {saved.count} regression example{saved.count > 1 ? "s" : ""} on file</>}.
-        </p>
+        <>
+          <p className="prevent-line">
+            Saved the failing case to dataset <code className="chip">{saved.dataset}</code> via MCP{" "}
+            <code className="chip">add-dataset-examples</code>
+            {saved.count > 0 && <> — {saved.count} regression example{saved.count > 1 ? "s" : ""} on file</>}.
+          </p>
+          {saved.url && (
+            <a className="exp-link" href={saved.url} target="_blank" rel="noreferrer">
+              view dataset in Phoenix ↗
+            </a>
+          )}
+        </>
       )}
     </StepCard>
   );
