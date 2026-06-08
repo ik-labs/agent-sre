@@ -26,6 +26,19 @@ Frame the MCP usage as the SRE's primary action layer (it satisfies "meaningful 
 and the Python eval libs as the measurement engine behind steps 2/4/5. Do not waste time hunting
 for an MCP "run_eval" tool — it isn't there.
 
+**UPDATE (verified live 2026-06-08, phoenix-mcp-server v1.1.0, 27 tools):** the MCP surface is
+RICHER than first assumed. It DOES include dataset *writes* and experiment *reads*:
+- `upsert-prompt` → **Fix (step 3)** via MCP. ✅
+- `add-dataset-examples` → **Prevent (step 6) is fully doable via MCP** (no Python client needed). ✅
+- `list-experiments-for-dataset`, `get-experiment-by-id`, `get-dataset-experiments` → read
+  experiment *results* via MCP for **Guard (step 5)**.
+- Still NO "run experiment" / "run eval" tool → executing the eval + experiment stays in the
+  `arize-phoenix` Python client (steps 2/4 + running step 5). Reading their outcomes is MCP.
+Full live tool list: list/get/upsert-prompt (+versions/tags), list-datasets, get-dataset,
+get-dataset-examples, add-dataset-examples, get-dataset-experiments, list-experiments-for-dataset,
+get-experiment-by-id, list-projects, get-project, list-traces, get-trace, get-spans,
+get-span-annotations, list-sessions, get-session, list-annotation-configs, phoenix-support.
+
 ---
 
 ## Package & version reference (verified)
@@ -199,17 +212,25 @@ adk deploy cloud_run \
 
 ## TASK TRACKER
 
-### Phase 0 — Setup & verification (Day 1 morning)
-- [ ] Clone `Arize-ai/gemini-hackathon` starter; confirm it exists + matches assumptions.
-- [ ] Create Phoenix Cloud account; grab space endpoint + API key.
-- [ ] GCP: `gcloud auth login`, set project, `gcloud auth application-default login` (ADC).
-- [ ] GCP: enable run / aiplatform / artifactregistry / cloudbuild APIs (see GCP section).
-- [ ] GCP: confirm IAM roles `run.sourceDeveloper` + `aiplatform.user`.
-- [ ] Confirm Vertex AI access + Gemini 3 model in your region; set Vertex env vars
-      (`GOOGLE_GENAI_USE_VERTEXAI=TRUE`, `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`).
-- [ ] `pip install` the Python deps; `npx` the MCP server; confirm it lists tools.
-- [ ] Lock host = Cloud Run (recommended). Don't revisit. Pick region `us-central1`, stick to it.
-- [ ] Init fresh public repo, MIT/Apache license, first commit.
+### Phase 0 — Setup & verification (Day 1 morning) — ✅ GREEN (2026-06-08)
+- [x] Clone `Arize-ai/gemini-hackathon` starter; confirm it exists + matches assumptions.
+      (Inspected via `gh api`; wiring patterns reused. Apache-2.0.)
+- [x] Create Phoenix Cloud account; grab space endpoint + API key.
+      (Space `phx-jp`; JWT-format key — not `px_live_`, both are valid.)
+- [x] GCP: `gcloud auth login`, set project, `gcloud auth application-default login` (ADC).
+      (Project `agent-sre-hk` #389498242223; ADC quota project aligned.)
+- [x] GCP: enable run / aiplatform / artifactregistry / cloudbuild APIs (see GCP section).
+- [~] GCP: confirm IAM roles `run.sourceDeveloper` + `aiplatform.user`.
+      (`aiplatform.user` confirmed — Vertex calls succeed. `run.sourceDeveloper` deferred to deploy.)
+- [x] Confirm Vertex AI access + Gemini model in your region; set Vertex env vars.
+      (**Locked `gemini-2.5-flash` in `us-central1`** — pinned for determinism. Gemini 3 IDs 404 in
+      this project on both regional + `global` endpoints; `-latest` aliases avoided (non-deterministic).
+      One-line `.env` swap if Gemini 3 becomes available.)
+- [x] `pip install` the Python deps (`uv sync`); `npx` the MCP server; confirm it lists tools.
+      (**27 tools**; `list-projects` reaches space; `incident-agent` project created by smoke trace.)
+- [x] Lock host = Cloud Run; region `us-central1`.
+- [x] Init fresh repo, Apache-2.0 license, first commit (`59960d6`). **TODO:** push to a *public*
+      GitHub remote before submission (license must be detectable in GitHub "About").
 
 ### Phase 1 — Target agent + tracing (Day 1)
 - [ ] Build minimal DevOps incident agent in `target_agent/` with 4 mock tools (`fixtures.py`).
