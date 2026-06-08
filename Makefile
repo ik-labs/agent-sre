@@ -9,12 +9,16 @@ help:
 	@echo "  make verify       - model-probe + smoke-trace + mcp-smoke in sequence"
 	@echo "  make incident     - run the broken target agent; print the failure chain"
 	@echo "  make seed-prompt  - seed the agent instruction into the Phoenix prompt store"
+	@echo "  make diagnose     - run the SRE's Diagnose step (reads target traces via Phoenix MCP)"
 
 incident:
 	uv run python -m target_agent.run_incident
 
 seed-prompt:
 	uv run python scripts/seed_prompt.py
+
+diagnose:
+	uv run python -m agent_sre.run_diagnose
 
 setup:
 	uv sync
