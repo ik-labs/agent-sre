@@ -18,6 +18,8 @@ dependencies = [
     "python-dotenv>=1.0.1",
     "opentelemetry-sdk>=1.27.0",
     "opentelemetry-exporter-otlp-proto-http>=1.27.0",
+    # Cockpit backend (uvicorn + sse-starlette already pulled in transitively by arize-phoenix)
+    "fastapi>=0.110",
 ]
 
 # Application layout (target_agent/ agent_sre/ scripts/), not a distributable package —

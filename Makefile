@@ -1,4 +1,4 @@
-.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident
+.PHONY: help setup model-probe smoke-trace mcp-smoke verify incident seed-prompt diagnose measure spine server cockpit
 
 help:
 	@echo "Agent SRE targets:"
@@ -12,6 +12,8 @@ help:
 	@echo "  make diagnose     - run the SRE's Diagnose step (reads target traces via Phoenix MCP)"
 	@echo "  make measure      - run the LLM-judge over the target's current behavior (0/1 or 1/1)"
 	@echo "  make spine        - the live spine: Measure -> Fix (MCP) -> Verify (0/1 -> 1/1)"
+	@echo "  make server       - run the cockpit FastAPI/SSE backend on :8000"
+	@echo "  make cockpit      - run the React/Vite cockpit dev server on :5173"
 
 incident:
 	uv run python -m target_agent.run_incident
@@ -27,6 +29,12 @@ measure:
 
 spine:
 	uv run python -m agent_sre.run_spine
+
+server:
+	uv run uvicorn agent_sre.server:app --reload --port 8000
+
+cockpit:
+	cd cockpit && npm install && npm run dev
 
 setup:
 	uv sync
