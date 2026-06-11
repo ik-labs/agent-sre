@@ -9,10 +9,13 @@ export function Gate({ children }: { children: ReactNode }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Accept the password from the URL (?key= / ?password=) so a shared link auto-authenticates,
-    // else fall back to a previously stored key. Decide whether to gate.
-    const params = new URLSearchParams(window.location.search);
-    const urlKey = params.get("key") || params.get("password") || params.get("pw");
+    // Accept the password from the URL so a shared link auto-authenticates. Prefer the fragment
+    // (#key=…), which the browser never sends to the server — so it never lands in access logs or
+    // the Referer header — falling back to a query param, then a previously stored key.
+    const pick = (p: URLSearchParams) => p.get("key") || p.get("password") || p.get("pw");
+    const urlKey =
+      pick(new URLSearchParams(window.location.hash.replace(/^#/, ""))) ||
+      pick(new URLSearchParams(window.location.search));
     const candidate = urlKey || sessionStorage.getItem("demo_key") || undefined;
     checkAuth(candidate).then((r) => {
       if (!r.gated) setStatus("open");
