@@ -9,11 +9,21 @@ export function Gate({ children }: { children: ReactNode }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Try the stored key (if any); decide whether to gate.
-    checkAuth(sessionStorage.getItem("demo_key") || undefined).then((r) => {
+    // Accept the password from the URL (?key= / ?password=) so a shared link auto-authenticates,
+    // else fall back to a previously stored key. Decide whether to gate.
+    const params = new URLSearchParams(window.location.search);
+    const urlKey = params.get("key") || params.get("password") || params.get("pw");
+    const candidate = urlKey || sessionStorage.getItem("demo_key") || undefined;
+    checkAuth(candidate).then((r) => {
       if (!r.gated) setStatus("open");
-      else if (r.ok) setStatus("authed");
-      else setStatus("locked");
+      else if (r.ok) {
+        if (urlKey) {
+          setAuthKey(urlKey); // persist for the SSE calls
+          // strip the password from the address bar so it isn't left visible / copied
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        setStatus("authed");
+      } else setStatus("locked");
     });
   }, []);
 
