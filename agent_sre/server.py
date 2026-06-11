@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
@@ -152,4 +152,12 @@ async def drift(request: Request):
 # Serve the built cockpit at / when present (single public URL for Phase 5). Mounted last so /api wins.
 _DIST = Path(__file__).resolve().parents[1] / "cockpit" / "dist"
 if _DIST.is_dir():
+
+    @app.get("/")
+    async def index() -> FileResponse:
+        # index.html must never be cached: a stale copy references an old JS bundle, so a fresh
+        # build (e.g. the #key= auto-auth link) silently no-ops until the visitor hard-refreshes.
+        # The hashed /assets/* files are content-addressed and cached normally by StaticFiles below.
+        return FileResponse(_DIST / "index.html", headers={"Cache-Control": "no-cache, max-age=0"})
+
     app.mount("/", StaticFiles(directory=str(_DIST), html=True), name="cockpit")
